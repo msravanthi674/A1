@@ -5,10 +5,20 @@ from typing import TypedDict, List, Annotated
 from langchain_groq import ChatGroq
 from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, END
-from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
+from duckduckgo_search import DDGS
 
-# Initialize Search Tool with result URLs
-search = DuckDuckGoSearchAPIWrapper(max_results=5)
+# Robust direct search wrapper
+class CleanSearch:
+    def results(self, query, max_results=5):
+        try:
+            with DDGS() as ddgs:
+                results = ddgs.text(query, max_results=max_results)
+                return [{"title": r['title'], "link": r['href'], "snippet": r['body']} for r in results]
+        except Exception as e:
+            print(f"Search Error: {e}")
+            return []
+
+search = CleanSearch()
 
 class ResearchState(TypedDict):
     target: str
